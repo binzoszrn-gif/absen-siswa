@@ -20,16 +20,20 @@ export default function Login() {
   const [status, setStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
 
   const testConnection = async () => {
+    const currentUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
     setStatus('testing');
     try {
+      if (!currentUrl || currentUrl.includes('your-project-id')) {
+        throw new Error('URL Supabase belum diset di panel Secrets!');
+      }
       const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
       if (error && error.code !== 'PGRST116') throw error;
       setStatus('ok');
-      alert('Koneksi Supabase BERHASIL! URL dan Anon Key sudah benar.');
+      alert(`Koneksi BERHASIL!\nURL: ${currentUrl}\nKoneksi ke database sudah sinkron.`);
     } catch (err: any) {
       console.error(err);
       setStatus('fail');
-      alert('Koneksi GAGAL: ' + (err.message || 'Cek kembali Anon Key Anda (Harus diawali eyJ)'));
+      alert(`Koneksi GAGAL!\nURL Terdeteksi: ${currentUrl || 'Tidak ada'}\nError: ${err.message}`);
     }
   };
 
