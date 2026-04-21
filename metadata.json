@@ -1,0 +1,6 @@
+{
+  "name": "SMK Prima Unggul Attendance System",
+  "description": "Full-stack attendance application for students and staff of SMK Prima Unggul with role-based access control (Admin, Teacher, Staff).",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
