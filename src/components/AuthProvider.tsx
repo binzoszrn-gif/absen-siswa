@@ -46,10 +46,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', uid)
         .single();
       
-      if (error) throw error;
-      setUser(data);
+      if (error) {
+        // If profile doesn't exist, create a default one
+        if (error.code === 'PGRST116') {
+          const { data: newUser } = await supabase.auth.getUser();
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: uid,
+              full_name: newUser.user?.user_metadata?.full_name || 'New User',
+              role: 'admin' // Make first user admin as fallback
+            })
+            .select()
+            .single();
+          
+          if (createError) throw createError;
+          setUser(newProfile);
+        } else {
+          throw error;
+        }
+      } else {
+        setUser(data);
+      }
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      console.error('Error fetching/creating profile:', err);
     } finally {
       setLoading(false);
     }
