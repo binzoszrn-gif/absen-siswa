@@ -17,6 +17,22 @@ export default function Login() {
     if (user) navigate('/app');
   }, [user, navigate]);
 
+  const [status, setStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+
+  const testConnection = async () => {
+    setStatus('testing');
+    try {
+      const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+      if (error && error.code !== 'PGRST116') throw error;
+      setStatus('ok');
+      alert('Koneksi Supabase BERHASIL! URL dan Anon Key sudah benar.');
+    } catch (err: any) {
+      console.error(err);
+      setStatus('fail');
+      alert('Koneksi GAGAL: ' + (err.message || 'Cek kembali Anon Key Anda (Harus diawali eyJ)'));
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -100,6 +116,14 @@ export default function Login() {
                 <p>{error}</p>
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={testConnection}
+              className="w-full py-3 px-6 bg-gray-100 text-gray-500 rounded-2xl font-bold text-xs hover:bg-gray-200 transition-all mb-2"
+            >
+              {status === 'testing' ? 'Mengecek...' : 'Tes Koneksi Supabase'}
+            </button>
 
             <button
               type="submit"
