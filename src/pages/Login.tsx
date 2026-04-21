@@ -23,15 +23,21 @@ export default function Login() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Login Error:', error);
+        throw error;
+      }
+      
+      console.log('Login success, checking profile...');
       navigate('/app');
     } catch (err: any) {
-      setError(err.message || 'Gagal masuk. Periksa email dan password Anda.');
+      console.error('Caught error:', err);
+      setError(err.message || 'Gagal masuk. Periksa koneksi dan kredensial Anda.');
     } finally {
       setLoading(false);
     }
