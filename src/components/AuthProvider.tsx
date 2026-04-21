@@ -39,7 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(uid: string) {
+    setLoading(true);
     try {
+      console.log('Fetching profile for UID:', uid);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -47,29 +49,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
       
       if (error) {
-        // If profile doesn't exist, create a default one
+        console.warn('Profile fetch error:', error.message);
+        // If profile doesn't exist (PGRST116), try to create one
         if (error.code === 'PGRST116') {
-          const { data: newUser } = await supabase.auth.getUser();
+          console.log('Profile not found, attempting to create default profile...');
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .upsert({
+            .insert({
               id: uid,
-              full_name: newUser.user?.user_metadata?.full_name || 'New User',
-              role: 'admin' // Make first user admin as fallback
+              full_name: authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'New User',
+              role: 'admin' // Fallback to admin for setup
             })
             .select()
             .single();
           
-          if (createError) throw createError;
+          if (createError) {
+            console.error('Failed to create profile:', createError);
+            throw createError;
+          }
+          console.log('Default profile created successfully');
           setUser(newProfile);
         } else {
           throw error;
         }
       } else {
+        console.log('Profile found:', data.full_name, 'Role:', data.role);
         setUser(data);
       }
-    } catch (err) {
-      console.error('Error fetching/creating profile:', err);
+    } catch (err: any) {
+      console.error('Auth Exception:', err.message);
+      // Optional: alert(`Gagal memuat profil: ${err.message}. Pastikan SQL Schema sudah dijalankan.`);
     } finally {
       setLoading(false);
     }
